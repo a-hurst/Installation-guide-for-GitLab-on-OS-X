@@ -545,6 +545,7 @@ bundle exec rake gitlab:env:info RAILS_ENV=production
 sudo su git
 . ~/.profile
 cd ~/gitlab/
+yarn install --production --pure-lockfile
 bundle exec rake assets:precompile RAILS_ENV=production
 ```
 
