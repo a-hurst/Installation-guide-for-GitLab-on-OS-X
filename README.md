@@ -10,10 +10,11 @@ The GitLab installation consists of setting up the following components:
 2.  System User
 3.  Ruby
 4.  Go
-5.  Database
-6.  Redis
-7.  GitLab
-8.  Nginx
+5.  Node 
+6.  Database
+7.  Redis
+8.  GitLab
+9.  Nginx
 
 ## 1. Packages / Dependencies
 
@@ -153,7 +154,15 @@ To install gitlab-git-http-server we need a Go compiler.
 brew install go
 ```
 
-## 5. Database
+## 5. Node
+
+Since GitLab 8.17, GitLab requires the use of node >= v4.3.0 to compile javascript assets, and yarn >= v0.17.0 to manage javascript dependencies.
+
+```
+brew install node yarn
+```
+
+## 6. Database
 
 Gitlab recommends using a PostgreSQL database. But you can use MySQL too, see [MySQL setup guide](database_mysql.md).
 
@@ -200,7 +209,7 @@ Try connecting to the new database with the new user
 sudo -u git -H psql -d gitlabhq_production
 ```
 
-## 6. Redis
+## 7. Redis
 
 ```
 brew install redis
@@ -232,7 +241,7 @@ Start Redis
 launchctl load ~/Library/LaunchAgents/homebrew.mxcl.redis.plist
 ```
 
-## 7. GitLab
+## 8. GitLab
 
 ```
 cd /Users/git
@@ -544,7 +553,7 @@ bundle exec rake assets:precompile RAILS_ENV=production
 sudo sh /etc/init.d/gitlab start
 ```
 
-## 8. Nginx
+## 9. Nginx
 
 **Note:** Nginx is the officially supported web server for GitLab. If you cannot or do not want to use Nginx as your web server, have a look at the [GitLab recipes](https://gitlab.com/gitlab-org/gitlab-recipes/).
 
