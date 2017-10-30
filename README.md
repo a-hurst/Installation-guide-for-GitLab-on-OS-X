@@ -455,7 +455,7 @@ sudo -u git -H nano /Users/git/gitlab-shell/config.yml
 
 ```
 cd /Users/git/gitlab
-sudo -u git -H bundle exec rake "gitlab:workhorse:install[/home/git/gitlab-workhorse]" RAILS_ENV=production
+sudo -u git -H bundle exec rake "gitlab:workhorse:install[/Users/git/gitlab-workhorse]" RAILS_ENV=production
 ```
 
 ### Initialize Database and Activate Advanced Features
