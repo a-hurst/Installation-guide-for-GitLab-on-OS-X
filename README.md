@@ -173,6 +173,7 @@ Create a user for GitLab.
 
 ```
 CREATE USER git;
+ALTER USER git WITH ENCRYPTED PASSWORD 'MY_SECRET_PASSWORD';
 ```
 
 Create the GitLab production database & grant all privileges on database
