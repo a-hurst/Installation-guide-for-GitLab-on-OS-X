@@ -172,8 +172,14 @@ psql -d postgres
 Create a user for GitLab.
 
 ```
-CREATE USER git;
+CREATE USER git CREATEDB;
 ALTER USER git WITH ENCRYPTED PASSWORD 'MY_SECRET_PASSWORD';
+```
+
+Create the pg_trgm extension (required for GitLab 8.6+):
+
+```
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 ```
 
 Create the GitLab production database & grant all privileges on database
