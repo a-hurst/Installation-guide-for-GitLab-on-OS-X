@@ -295,6 +295,7 @@ sudo chmod 0700 public/uploads
 Make sure GitLab can write to the repositories directory
 
 ```
+mkdir /Users/git/repositories/
 sudo chmod -R ug+rwX,o-rwx /Users/git/repositories/
 sudo chmod -R ug-s /Users/git/repositories/
 sudo find /Users/git/repositories/ -type d -print0 | sudo xargs -0 chmod g+s
