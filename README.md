@@ -1,4 +1,4 @@
-# Installation guide for GitLab 8.15 on OS X 10.11
+# Installation guide for GitLab 10.1.0 on OS X 10.11.6
 
 > This is WIP version for OS X 10.11. For OS X 10.10 see [10.10 branch](https://github.com/WebEntity/Installation-guide-for-GitLab-on-OS-X/tree/10.10).
 
@@ -10,10 +10,11 @@ The GitLab installation consists of setting up the following components:
 2.  System User
 3.  Ruby
 4.  Go
-5.  Database
-6.  Redis
-7.  GitLab
-8.  Nginx
+5.  Node 
+6.  Database
+7.  Redis
+8.  GitLab
+9.  Nginx
 
 ## 1. Packages / Dependencies
 
@@ -153,7 +154,15 @@ To install gitlab-git-http-server we need a Go compiler.
 brew install go
 ```
 
-## 5. Database
+## 5. Node
+
+Since GitLab 8.17, GitLab requires the use of node >= v4.3.0 to compile javascript assets, and yarn >= v0.17.0 to manage javascript dependencies.
+
+```
+brew install node yarn
+```
+
+## 6. Database
 
 Gitlab recommends using a PostgreSQL database. But you can use MySQL too, see [MySQL setup guide](database_mysql.md).
 
@@ -172,7 +181,14 @@ psql -d postgres
 Create a user for GitLab.
 
 ```
-CREATE USER git;
+CREATE USER git CREATEDB;
+ALTER USER git WITH ENCRYPTED PASSWORD 'MY_SECRET_PASSWORD';
+```
+
+Create the pg_trgm extension (required for GitLab 8.6+):
+
+```
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 ```
 
 Create the GitLab production database & grant all privileges on database
@@ -193,7 +209,7 @@ Try connecting to the new database with the new user
 sudo -u git -H psql -d gitlabhq_production
 ```
 
-## 6. Redis
+## 7. Redis
 
 ```
 brew install redis
@@ -225,7 +241,7 @@ Start Redis
 launchctl load ~/Library/LaunchAgents/homebrew.mxcl.redis.plist
 ```
 
-## 7. GitLab
+## 8. GitLab
 
 ```
 cd /Users/git
@@ -236,7 +252,7 @@ cd /Users/git
 Clone GitLab repository
 
 ```
-sudo -u git -H git clone https://gitlab.com/gitlab-org/gitlab-ce.git -b 8-11-stable gitlab
+sudo -u git -H git clone https://gitlab.com/gitlab-org/gitlab-ce.git -b 10-1-stable gitlab
 ```
 
 **Note:** You can change `8-11-stable` to `master` if you want the *bleeding edge* version, but never install master on a production server!
@@ -438,7 +454,7 @@ Run the installation task for gitlab-shell (replace `REDIS_URL` if needed):
 sudo su git
 . ~/.profile
 cd ~/gitlab/
-bundle exec rake gitlab:shell:install[v4.1.1] REDIS_URL=unix:/tmp/redis.sock RAILS_ENV=production
+bundle exec rake gitlab:shell:install REDIS_URL=unix:/tmp/redis.sock RAILS_ENV=production
 ```
 
 By default, the gitlab-shell config is generated from your main GitLab config.
@@ -499,12 +515,34 @@ sudo cp lib/support/init.d/gitlab /etc/init.d/gitlab
 Since you are installing to a folder other than default ```/home/users/git/gitlab```, copy and edit the defaults file:
 
 ```
-curl -O https://raw.githubusercontent.com/WebEntity/Installation-guide-for-GitLab-on-OS-X/master/gitlab.default.osx
+sudo -u git -H curl -O https://raw.githubusercontent.com/WebEntity/Installation-guide-for-GitLab-on-OS-X/master/gitlab.default.osx
 sudo cp gitlab.default.osx /etc/default/gitlab.default
 ```
 
 If you installed GitLab in another directory or as a user other than the default you should change these settings in `/etc/default/gitlab`. Do not edit `/etc/init.d/gitlab` as it will be changed on upgrade.
 
+
+### Install Gitaly
+
+    # Fetch Gitaly source with Git and compile with Go
+    sudo -u git -H bundle exec rake "gitlab:gitaly:install[/home/git/gitaly]" RAILS_ENV=production
+
+You can specify a different Git repository by providing it as an extra paramter:
+
+    sudo -u git -H bundle exec rake "gitlab:gitaly:install[/home/git/gitaly,https://example.com/gitaly.git]" RAILS_ENV=production
+
+Next, make sure gitaly configured:
+
+    # Restrict Gitaly socket access
+    sudo chmod 0700 /Users/git/gitlab/tmp/sockets/private
+    sudo chown git /Users/git/gitlab/tmp/sockets/private
+
+    # If you are using non-default settings you need to update config.toml
+    cd /Users/git/gitaly
+    sudo -u git -H editor config.toml
+
+For more information about configuring Gitaly see
+[doc/administration/gitaly](../administration/gitaly).
 
 ### Setup Logrotate
 ```
@@ -524,11 +562,22 @@ cd ~/gitlab/
 bundle exec rake gitlab:env:info RAILS_ENV=production
 ```
 
+### Compile GetText PO files
+
+```
+sudo su git
+. ~/.profile
+cd ~/gitlab/
+bundle exec rake gettext:pack RAILS_ENV=production
+bundle exec rake gettext:po_to_json RAILS_ENV=production
+```
+
 ### Compile Assets
 ```
 sudo su git
 . ~/.profile
 cd ~/gitlab/
+yarn install --production --pure-lockfile
 bundle exec rake assets:precompile RAILS_ENV=production
 ```
 
@@ -537,13 +586,14 @@ bundle exec rake assets:precompile RAILS_ENV=production
 sudo sh /etc/init.d/gitlab start
 ```
 
-## 8. Nginx
+## 9. Nginx
 
 **Note:** Nginx is the officially supported web server for GitLab. If you cannot or do not want to use Nginx as your web server, have a look at the [GitLab recipes](https://gitlab.com/gitlab-org/gitlab-recipes/).
 
 ### Installation
 ```
-brew install nginx
+brew tap homebrew/nginx
+brew install nginx-full --with-realip
 sudo mkdir -p /var/log/nginx/
 ```
 
@@ -586,7 +636,7 @@ You should receive `syntax is okay` and `test is successful` messages. If you re
 ### Start
 
 ```
-sudo nginx
+sudo brew services start nginx-full
 ```
 
 ## Done!
