@@ -455,8 +455,10 @@ sudo -u git -H nano /Users/git/gitlab-shell/config.yml
 ### Install gitlab-workhorse
 
 ```
-cd /Users/git/gitlab
-sudo -u git -H bundle exec rake "gitlab:workhorse:install[/Users/git/gitlab-workhorse]" RAILS_ENV=production
+sudo su git
+. ~/.profile
+cd ~/gitlab/
+bundle exec rake "gitlab:workhorse:install[/Users/git/gitlab-workhorse]" RAILS_ENV=production
 ```
 
 ### Initialize Database and Activate Advanced Features
