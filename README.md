@@ -476,7 +476,7 @@ sudo -u git -H bundle exec rake assets:precompile RAILS_ENV=production NODE_ENV=
 
 ### Start Your GitLab Instance
 
-Before we can start our GitLab instance, we first have to edit a file to prevent Unicorn from crashing on launch on High Sierra (see [this](https://blog.phusion.nl/2017/10/13/why-ruby-app-servers-break-on-macos-high-sierra-and-what-can-be-done-about-it/ for more details)):
+Before we can start our GitLab instance, we first have to edit a file to prevent Unicorn from crashing on launch on High Sierra (see [this](https://blog.phusion.nl/2017/10/13/why-ruby-app-servers-break-on-macos-high-sierra-and-what-can-be-done-about-it/) for more details):
 
 ```
 cd /Users/git/gitlab/
