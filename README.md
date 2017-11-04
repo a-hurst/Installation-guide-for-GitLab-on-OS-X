@@ -1,8 +1,8 @@
-# Installation guide for GitLab 10.1.0 on OS X 10.11.6
+# Installation guide for GitLab 10.1.0 on macOS 10.13.0
 
 ## Overview
 
-This is an **unofficial** community-made guide for installing GitLab CE on OS X, based on the official GitLab [installation from source guide](https://docs.gitlab.com/ce/install/installation.html). GitLab does not officially support OS X whatsoever and is largely untested on the platform, so please think twice before installing this for use in a mission-critical environment. That said, GitLab CE does install and run on an OS X server with the following instructions, so if you're looking to set up a GitLab server for personal or small team use, read on!
+This is an **unofficial** community-made guide for installing GitLab CE on macOS, based on the official GitLab [installation from source guide](https://docs.gitlab.com/ce/install/installation.html). GitLab does not officially support macOS whatsoever and is largely untested on the platform, so please think twice before installing this for use in a mission-critical environment. That said, GitLab CE does install and run on a macOS server with the following instructions, so if you're looking to set up a GitLab server for personal or small team use, read on!
 
 ## Index
 
@@ -77,45 +77,12 @@ sudo defaults delete /Library/Preferences/com.apple.loginwindow HiddenUsersList
 
 > The use of Ruby version managers such as [RVM](http://rvm.io/), [rbenv](https://github.com/sstephenson/rbenv) or [chruby](https://github.com/postmodern/chruby) with GitLab in production frequently leads to hard to diagnose problems. For example, GitLab Shell is called from OpenSSH and having a version manager can prevent pushing and pulling over SSH. Version managers are not supported and we strongly advise everyone to follow the instructions below to use a system Ruby.
 
-On OS X we are forced to use non-system ruby and install it using version manager.
-
-Install rbenv and ruby-build
+macOS High Sierra ships with ruby 2.3.3, so there is no longer any need to install a brewed version. All you need to do is install the bundler gem:
 
 ```
-brew install rbenv ruby-build
+sudo gem install bundler --no-ri --no-rdoc
 ```
 
-Make sure rbenv loads in the git user's shell
-
-```
-echo 'export PATH="/usr/local/bin:$PATH"' | sudo -u git tee -a /Users/git/.profile
-echo 'if which rbenv > /dev/null; then eval "$(rbenv init -)"; fi' | sudo -u git tee -a /Users/git/.profile
-sudo -u git cp /Users/git/.profile /Users/git/.bashrc
-```
-
-If you get the following error on OS X 10.8.5 or lower:
-`./bin/install:3: undefined method `require_relative' for main:Object (NoMethodError)`
-Do the following to update to the proper Ruby version
-
-```
-echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.bash_profile
-echo 'eval "$(rbenv init - --no-rehash)"' >> ~/.bash_profile
-. ~/.bash_profile
-```
-
-Install ruby for the git user
-
-```
-sudo -u git -H -i 'rbenv install 2.3.3'
-sudo -u git -H -i 'rbenv global 2.3.3'
-```
-
-Install ruby for your user too (optional)
-
-```
-rbenv install 2.3.3
-rbenv global 2.3.3
-```
 
 ## 4. Go
 
@@ -236,7 +203,7 @@ Go to GitLab installation folder
 cd /Users/git/gitlab
 ```
 
-Copy the example GitLab config and edit it to suit OSX's directory structure:
+Copy the example GitLab config and edit it to suit macOS's directory structure:
 
 ```
 sudo -u git -H cp config/gitlab.yml.example config/gitlab.yml
@@ -404,23 +371,31 @@ Preparation:
 
 ```
 sudo su git
-. ~/.profile
-gem install bundler --no-ri --no-rdoc
-rbenv rehash
 cd ~/gitlab/
 ```
+
+First, we need to set some build flags for the charlock_holmes gem in order for it to compile properly on macOS:
+
+```
+bundle config build.charlock_holmes --with-icu-dir=/usr/local/opt/icu4c --with-cxxflags=-std=c++11
+
+```
+
+Then we can install all GitLab's required gems using bundler. Note that we have to preface the install commands with `env ARCHFLAGS="-arch x86_64 -Wno-error=reserved-user-defined-literal"` for things to work properly; this is because High Sierra's Ruby.h C header conflicts with the warning-to-error settings of the default Clang compiler and prevents some gems with native extensions (e.g. `charlock_holmes` and `re2`) from building without those environment variables set.
 
 For PostgreSQL (note, the option says "without ... mysql")
 
 ```
-bundle install --deployment --without development test mysql aws kerberos
+env ARCHFLAGS="-arch x86_64 -Wno-error=reserved-user-defined-literal" bundle install --deployment --without development test mysql aws kerberos
 ```
 
 Or if you use MySQL (note, the option says "without ... postgres")
 
 ```
-bundle install --deployment --without development test postgres aws kerberos
+env ARCHFLAGS="-arch x86_64 -Wno-error=reserved-user-defined-literal" bundle install --deployment --without development test postgres aws kerberos
 ```
+
+
 
 **Note:** If you want to use Kerberos for user authentication, then omit `kerberos` in the `--without` option above.
 
@@ -431,10 +406,7 @@ GitLab Shell is an SSH access and repository management software developed speci
 Run the installation task for gitlab-shell (replace `REDIS_URL` if needed):
 
 ```
-sudo su git
-. ~/.profile
-cd ~/gitlab/
-bundle exec rake gitlab:shell:install REDIS_URL=unix:/tmp/redis.sock RAILS_ENV=production
+sudo -u git -H bundle exec rake gitlab:shell:install REDIS_URL=unix:/tmp/redis.sock RAILS_ENV=production
 ```
 
 By default, the gitlab-shell config is generated from your main GitLab config.
@@ -451,19 +423,13 @@ sudo -u git -H nano /Users/git/gitlab-shell/config.yml
 ### Install gitlab-workhorse
 
 ```
-sudo su git
-. ~/.profile
-cd ~/gitlab/
-bundle exec rake "gitlab:workhorse:install[/Users/git/gitlab-workhorse]" RAILS_ENV=production
+sudo -u git -H bundle exec rake "gitlab:workhorse:install[/Users/git/gitlab-workhorse]" RAILS_ENV=production
 ```
 
 ### Initialize Database and Activate Advanced Features
 
 ```
-sudo su git
-. ~/.profile
-cd ~/gitlab/
-bundle exec rake gitlab:setup RAILS_ENV=production
+sudo -u git -H bundle exec rake gitlab:setup RAILS_ENV=production
 ```
 
 Type 'yes' to create the database tables.
@@ -472,7 +438,7 @@ When done you see 'Administrator account created:
 **Note:** You can set the Administrator/root password by supplying it in environmental variable `GITLAB_ROOT_PASSWORD` as seen below. If you don't set the password (and it is set to the default one) please wait with exposing GitLab to the public internet until the installation is done and you've logged into the server the first time. During the first login you'll be forced to change the default password.
 
 ```
-bundle exec rake gitlab:setup RAILS_ENV=production GITLAB_ROOT_PASSWORD=yourpassword
+sudo -u git -H bundle exec rake gitlab:setup RAILS_ENV=production GITLAB_ROOT_PASSWORD=yourpassword
 ```
 
 ### Secure secrets.yml
@@ -535,34 +501,39 @@ brew services start logrotate
 
 Check if GitLab and its environment are configured correctly:
 ```
-sudo su git
-. ~/.profile
-cd ~/gitlab/
-bundle exec rake gitlab:env:info RAILS_ENV=production
+sudo -u git -H bundle exec rake gitlab:env:info RAILS_ENV=production
 ```
 
 ### Compile GetText PO files
 
 ```
-sudo su git
-. ~/.profile
-cd ~/gitlab/
-bundle exec rake gettext:pack RAILS_ENV=production
-bundle exec rake gettext:po_to_json RAILS_ENV=production
+sudo -u git -H bundle exec rake gettext:pack RAILS_ENV=production
+sudo -u git -H bundle exec rake gettext:po_to_json RAILS_ENV=production
 ```
 
 ### Compile Assets
 ```
-sudo su git
-. ~/.profile
-cd ~/gitlab/
-yarn install --production --pure-lockfile
-bundle exec rake assets:precompile RAILS_ENV=production
+sudo -u git -H yarn install --production --pure-lockfile
+sudo -u git -H bundle exec rake assets:precompile RAILS_ENV=production NODE_ENV=production
 ```
 
 ### Start Your GitLab Instance
+
+Before we can start our GitLab instance, we first have to edit a file to prevent Unicorn from crashing on launch on High Sierra (see [this](https://blog.phusion.nl/2017/10/13/why-ruby-app-servers-break-on-macos-high-sierra-and-what-can-be-done-about-it/ for more details):
+
 ```
-sudo sh /etc/init.d/gitlab start
+cd /Users/git/gitlab/
+sudo -u git -H nano bin/web
+```
+then, add the line
+
+```
+export DYLD_INSERT_LIBRARIES=/System/Library/Frameworks/Foundation.framework/Versions/Current/Foundation
+```
+
+between the `#/bin/sh` line at the top and the `cd $(dirname $0)/..` line, and save the file. Once this has been done, you can start your gitlab instance by running
+```
+sudo -u git -H /etc/init.d/gitlab start
 ```
 
 ## 9. Nginx
@@ -625,10 +596,7 @@ sudo brew services start nginx-full
 To make sure you didn't miss anything run a more thorough check with:
 
 ```
-sudo su git
-. ~/.profile
-cd ~/gitlab/
-bundle exec rake gitlab:check RAILS_ENV=production
+sudo -u git -H bundle exec rake gitlab:check RAILS_ENV=production
 ```
 
 If all items are green, then congratulations on successfully installing GitLab!
