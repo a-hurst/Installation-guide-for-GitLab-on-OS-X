@@ -211,134 +211,78 @@ sudo -u git -H git clone https://gitlab.com/gitlab-org/gitlab-ce.git -b 10-1-sta
 
 ### Configure It
 
-Go to GitLab installation folder
-
 ```
+# Go to GitLab installation folder
 cd /Users/git/gitlab
-```
 
-Copy the example GitLab config and edit it to suit macOS's directory structure:
-
-```
+# Copy the example GitLab config and edit it to suit macOS's directory structure
 sudo -u git -H cp config/gitlab.yml.example config/gitlab.yml
 sudo -u git sed -i "" "s/\/usr\/bin\/git/\/usr\/local\/bin\/git/g" config/gitlab.yml
 sudo -u git sed -i "" "s/\/home/\/Users/g" config/gitlab.yml
-```
 
-Update GitLab config file, follow the directions at top of file
-
-```
+# Update GitLab config file, follow the directions at top of file
 sudo -u git -H nano config/gitlab.yml
-```
 
-Copy the example secrets file
-
-```
+# Copy the example secrets file
 sudo -u git -H cp config/secrets.yml.example config/secrets.yml
 sudo -u git -H chmod 0600 config/secrets.yml
-```
 
-Make sure GitLab can write to the log/ and tmp/ directories
-
-```
+# Make sure GitLab can write to the log/ and tmp/ directories
 sudo chown -R git log/
 sudo chown -R git tmp/
 sudo chmod -R u+rwX,go-w log/
 sudo chmod -R u+rwX tmp/
-```
 
-Make sure GitLab can write to the tmp/pids/ and tmp/sockets/ directories
-
-```
+# Make sure GitLab can write to the tmp/pids/ and tmp/sockets/ directories
 sudo chmod -R u+rwX tmp/pids/
 sudo chmod -R u+rwX tmp/sockets/
-```
 
-Create the public/uploads/ directory
-
-```
+# Create the public/uploads/ directory
 sudo -u git -H mkdir public/uploads/
-```
 
-Make sure only the GitLab user has access to the public/uploads/ directory now that files in public/uploads are served by gitlab-workhorse
-
-```
+# Make sure only the GitLab user has access to the public/uploads/ directory
+# now that files in public/uploads are served by gitlab-workhorse
 sudo chmod 0700 public/uploads
-```
 
-Change the permissions of the directory where CI job traces are stored
-
-```
+# Change the permissions of the directory where CI job traces are stored
 sudo chmod -R u+rwX builds/
-```
 
-Change the permissions of the directory where CI artifacts are stored
-
-```
+# Change the permissions of the directory where CI artifacts are stored
 sudo chmod -R u+rwX shared/artifacts/
-```
 
-Change the permissions of the directory where GitLab Pages are stored
-
-```
+# Change the permissions of the directory where GitLab Pages are stored
 sudo chmod -R u+rwX shared/pages
-```
 
-Copy the example Unicorn config
-
-```
+# Copy the example Unicorn config
 sudo -u git -H cp config/unicorn.rb.example config/unicorn.rb
 sudo -u git sed -i "" "s/\/home/\/Users/g" config/unicorn.rb
-```
 
-Find number of cores
-
-```
+# Find number of cores
 sysctl -n hw.ncpu
-```
 
-Enable cluster mode if you expect to have a high load instance
-Ex. change amount of workers to 3 for 2GB RAM server
-Set the number of workers to at least the number of cores
-
-```
+# Enable cluster mode if you expect to have a high load instance
+# Ex. change amount of workers to 3 for 2GB RAM server
+# Set the number of workers to at least the number of cores
 sudo -u git -H nano config/unicorn.rb
-```
 
-Copy the example Rack attack config
-
-```
+# Copy the example Rack attack config
 sudo -u git -H cp config/initializers/rack_attack.rb.example config/initializers/rack_attack.rb
-```
 
-Configure Git global settings for git user, used when editing via web editor
-
-```
+# Configure Git global settings for git user, used when editing via web editor
 sudo -u git -H git config --global core.autocrlf input
-```
 
-Disable `git gc --auto` because GitLab runs `git gc` for us already.
-
-```
+# Disable 'git gc --auto' because GitLab runs 'git gc' for us already.
 sudo -u git -H git config --global gc.auto 0
-```
 
-Configure Git to generate packfile bitmaps (introduced in Git 2.0) on the GitLab server during git gc.
-
-```
+# Configure Git to generate packfile bitmaps (introduced in Git 2.0) on the GitLab server during git gc.
 sudo -u git -H git config --global repack.writeBitmaps true
-```
 
-Configure Redis connection settings
-
-```
+# Configure Redis connection settings
 sudo -u git -H cp config/resque.yml.example config/resque.yml
-```
 
-Change the Redis socket path to `/tmp/redis.sock`:
-
-```
+# Change the Redis socket path to '/tmp/redis.sock'
 sudo -u git -H nano config/resque.yml
+
 ```
 
 **Important Note:** Make sure to edit both `gitlab.yml` and `unicorn.rb` to match your setup.
@@ -392,7 +336,6 @@ First, we need to set some build flags for the charlock_holmes gem in order for 
 
 ```
 bundle config build.charlock_holmes --with-icu-dir=/usr/local/opt/icu4c --with-cxxflags=-std=c++11
-
 ```
 
 Then we can install all GitLab's required gems using bundler. Note that we have to preface the install commands with `env ARCHFLAGS="-arch x86_64 -Wno-error=reserved-user-defined-literal"` for things to work properly; this is because High Sierra's Ruby.h C header conflicts with the warning-to-error settings of the default Clang compiler and prevents some gems with native extensions (e.g. `charlock_holmes` and `re2`) from building without those environment variables set.
