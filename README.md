@@ -2,6 +2,10 @@
 
 ## Overview
 
+This is an **unofficial** community-made guide for installing GitLab CE on OS X, based on the official GitLab [installation from source guide](https://docs.gitlab.com/ce/install/installation.html). GitLab does not officially support OS X whatsoever and is largely untested on the platform, so please think twice before installing this for use in a mission-critical environment. That said, GitLab CE does install and run on an OS X server with the following instructions, so if you're looking to set up a GitLab server for personal or small team use, read on!
+
+## Index
+
 The GitLab installation consists of setting up the following components:
 
 1.  Packages / Dependencies
@@ -269,25 +273,34 @@ sudo chmod -R u+rwX tmp/pids/
 sudo chmod -R u+rwX tmp/sockets/
 ```
 
-Make sure GitLab can write to the public/uploads/ directory
+Create the public/uploads/ directory
+
+```
+sudo -u git -H mkdir public/uploads/
+```
+
+Make sure only the GitLab user has access to the public/uploads/ directory now that files in public/uploads are served by gitlab-workhorse
 
 ```
 sudo chmod 0700 public/uploads
 ```
 
-Make sure GitLab can write to the repositories directory
-
-```
-mkdir /Users/git/repositories/
-sudo chmod -R ug+rwX,o-rwx /Users/git/repositories/
-sudo chmod -R ug-s /Users/git/repositories/
-sudo find /Users/git/repositories/ -type d -print0 | sudo xargs -0 chmod g+s
-```
-
-Change the permissions of the directory where CI build traces are stored
+Change the permissions of the directory where CI job traces are stored
 
 ```
 sudo chmod -R u+rwX builds/
+```
+
+Change the permissions of the directory where CI artifacts are stored
+
+```
+sudo chmod -R u+rwX shared/artifacts/
+```
+
+Change the permissions of the directory where GitLab Pages are stored
+
+```
+sudo chmod -R u+rwX shared/pages
 ```
 
 Copy the example Unicorn config
