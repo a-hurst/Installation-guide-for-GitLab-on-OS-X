@@ -16,55 +16,25 @@ The GitLab installation consists of setting up the following components:
 
 ## 1. Packages / Dependencies
 
-Command line tools
-
-```
-xcode-select --install #xcode command line tools
-```
-
-Homebrew
+First, install [Homebrew](https://brew.sh) if you haven't already (this will also automatically install XCode CLI tools if they're not installed yet):
 
 ```
 ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-brew install icu4c git logrotate libxml2 cmake pkg-config openssl
-brew link openssl --force
 ```
 
-Make sure you have python 2.5+ (gitlab don’t support python 3.x)
-
-Confirm python 2.5+
+Then, once it's installed, use it to install the following prerequisite packages:
 
 ```
-python --version
-```
-
-GitLab looks for python2
-
-```
-sudo ln -s /usr/bin/python /usr/bin/python2
-```
-
-> On OS X 10.11 it won't work. You need to disable [SIP](https://en.wikipedia.org/wiki/System_Integrity_Protection).
-
-Some more dependices
-
-```
-sudo easy_install pip
-sudo pip install pygments
-```
-
-Install `docutils` from [source](http://sourceforge.net/projects/docutils/files/latest/download?source=files).
-
-```
-curl -O http://heanet.dl.sourceforge.net/project/docutils/docutils/0.12/docutils-0.12.tar.gz
-gunzip -c docutils-0.12.tar.gz | tar xopf -
-cd docutils-0.12
-sudo python setup.py install
+brew install icu4c git logrotate libxml2 cmake pkg-config openssl python re2
 ```
 
 ## 2. System User
 
-Run the following commands in order to create the group and user `git`:
+To create a user and group for GitLab on your system, you have two choices: through the "Users & Groups" pane in System Preferences, or through the command line via dscl.
+
+To add the `git` user and group through the GUI, create a new Standard user account in System Preferences > Users & Groups with the Full Name 'GitLab' and Account Name 'git' (with a password of your choosing), then create a Group (last option in the New Account dropdown) with the name 'git' and add the user GitLab to it.
+
+Alternatively, to create a new user and group through Terminal, run the following commands in order to create the group and user `git`:
 
 ```bash
 LastUserID=$(dscl . -list /Users UniqueID | awk '{print $2}' | sort -n | tail -1)
@@ -83,16 +53,17 @@ sudo dscl . create /Users/git PrimaryGroupID $NextGroupID
 sudo dscl . create /Users/git UserShell $(which bash)
 sudo dscl . create /Users/git NFSHomeDirectory /Users/git
 sudo cp -R /System/Library/User\ Template/English.lproj /Users/git
-sudo chown -R git:git /Users/git
 ```
 
-Hide the git user from the login screen:
+Regardless of how you create your git user, you will need to proper ownership of its home directory using `sudo chown -R git:git /Users/git`.
+
+To hide the git user from the login screen:
 
 ```
 sudo defaults write /Library/Preferences/com.apple.loginwindow HiddenUsersList -array-add git
 ```
 
-Unhide:
+To unhide it:
 
 ```
 sudo defaults delete /Library/Preferences/com.apple.loginwindow HiddenUsersList
@@ -144,9 +115,7 @@ rbenv global 2.3.3
 
 ## 4. Go
 
-Since GitLab 8.0, Git HTTP requests are handled by gitlab-git-http-server.
-This is a small daemon written in Go.
-To install gitlab-git-http-server we need a Go compiler.
+Since GitLab 8.0, GitLab has several daemons written in Go. To install GitLab we need a Go compiler.
 
 ```
 brew install go
@@ -162,12 +131,11 @@ brew install node yarn
 
 ## 6. Database
 
-Gitlab recommends using a PostgreSQL database. But you can use MySQL too, see [MySQL setup guide](database_mysql.md).
+Gitlab recommends using a PostgreSQL database. But you can use MySQL too, see [MySQL setup guide](https://docs.gitlab.com/ce/install/database_mysql.html).
 
 ```
 brew install postgresql
-ln -sfv /usr/local/opt/postgresql/*.plist ~/Library/LaunchAgents
-launchctl load ~/Library/LaunchAgents/homebrew.mxcl.postgresql.plist
+brew services start postgresql
 ```
 
 Login to PostgreSQL
@@ -209,9 +177,10 @@ sudo -u git -H psql -d gitlabhq_production
 
 ## 7. Redis
 
+GitLab also requires the redis package, which can also be installed with Homebrew:
+
 ```
 brew install redis
-ln -sfv /usr/local/opt/redis/*.plist ~/Library/LaunchAgents
 ```
 
 Redis config is located in `/usr/local/etc/redis.conf`. Make a copy:
@@ -233,10 +202,10 @@ unixsocket /tmp/redis.sock
 unixsocketperm 777
 ```
 
-Start Redis
+Then, you can start redis as a service that will persist across reboots by running
 
 ```
-launchctl load ~/Library/LaunchAgents/homebrew.mxcl.redis.plist
+brew services start redis
 ```
 
 ## 8. GitLab
@@ -263,7 +232,7 @@ Go to GitLab installation folder
 cd /Users/git/gitlab
 ```
 
-Copy the example GitLab config
+Copy the example GitLab config and edit it to suit OSX's directory structure:
 
 ```
 sudo -u git -H cp config/gitlab.yml.example config/gitlab.yml
@@ -546,8 +515,7 @@ For more information about configuring Gitaly see
 ```
 sudo cp lib/support/logrotate/gitlab /usr/local/etc/logrotate.d/gitlab
 sudo sed -i "" "s/\/home/\/Users/g" /usr/local/etc/logrotate.d/gitlab
-ln -sfv /usr/local/opt/logrotate/*.plist ~/Library/LaunchAgents
-launchctl load ~/Library/LaunchAgents/homebrew.mxcl.logrotate.plist
+brew services start logrotate
 ```
 
 ### Check Application Status
@@ -760,6 +728,4 @@ See [smtp_settings.rb.sample](https://gitlab.com/gitlab-org/gitlab-ce/blob/8-15-
 
 ### More
 
-You can find more tips in [official documentation](https://github.com/gitlabhq/gitlabhq/blob/8-0-stable/doc/install/installation.md#advanced-setup-tips).
-
-## Todo
+You can find more tips in [official documentation](https://docs.gitlab.com/ce/install/installation.html#advanced-setup-tips).
