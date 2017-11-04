@@ -472,11 +472,11 @@ sudo mkdir -p /etc/default/
 sudo cp lib/support/init.d/gitlab /etc/init.d/gitlab
 ```
 
-Since you are installing to a folder other than default ```/home/users/git/gitlab```, copy and edit the defaults file:
+Since we are installing to a folder other than default, we need to edit the defaults file after copying:
 
 ```
-sudo -u git -H curl -O https://raw.githubusercontent.com/WebEntity/Installation-guide-for-GitLab-on-OS-X/master/gitlab.default.osx
-sudo cp gitlab.default.osx /etc/default/gitlab.default
+sudo cp lib/support/init.d/gitlab.default.example /etc/default/gitlab
+sudo sed -i "" "s/\/home/\/Users/g" /etc/default/gitlab
 ```
 
 If you installed GitLab in another directory or as a user other than the default you should change these settings in `/etc/default/gitlab`. Do not edit `/etc/init.d/gitlab` as it will be changed on upgrade.
@@ -485,11 +485,11 @@ If you installed GitLab in another directory or as a user other than the default
 ### Install Gitaly
 
     # Fetch Gitaly source with Git and compile with Go
-    sudo -u git -H bundle exec rake "gitlab:gitaly:install[/home/git/gitaly]" RAILS_ENV=production
+    sudo -u git -H bundle exec rake "gitlab:gitaly:install[/Users/git/gitaly]" RAILS_ENV=production
 
 You can specify a different Git repository by providing it as an extra paramter:
 
-    sudo -u git -H bundle exec rake "gitlab:gitaly:install[/home/git/gitaly,https://example.com/gitaly.git]" RAILS_ENV=production
+    sudo -u git -H bundle exec rake "gitlab:gitaly:install[/Users/git/gitaly,https://example.com/gitaly.git]" RAILS_ENV=production
 
 Next, make sure gitaly configured:
 
@@ -502,7 +502,7 @@ Next, make sure gitaly configured:
     sudo -u git -H editor config.toml
 
 For more information about configuring Gitaly see
-[doc/administration/gitaly](../administration/gitaly).
+[doc/administration/gitaly](https://docs.gitlab.com/ce/administration/gitaly/).
 
 ### Setup Logrotate
 ```
@@ -533,7 +533,7 @@ sudo -u git -H bundle exec rake assets:precompile RAILS_ENV=production NODE_ENV=
 
 ### Start Your GitLab Instance
 
-Before we can start our GitLab instance, we first have to edit a file to prevent Unicorn from crashing on launch on High Sierra (see [this](https://blog.phusion.nl/2017/10/13/why-ruby-app-servers-break-on-macos-high-sierra-and-what-can-be-done-about-it/ for more details):
+Before we can start our GitLab instance, we first have to edit a file to prevent Unicorn from crashing on launch on High Sierra (see [this](https://blog.phusion.nl/2017/10/13/why-ruby-app-servers-break-on-macos-high-sierra-and-what-can-be-done-about-it/ for more details)):
 
 ```
 cd /Users/git/gitlab/
@@ -719,7 +719,7 @@ If you're installing from source and use SMTP to deliver mail, you will need to 
 ActionMailer::Base.delivery_method = :smtp
 ```
 
-See [smtp_settings.rb.sample](https://gitlab.com/gitlab-org/gitlab-ce/blob/8-15-stable/config/initializers/smtp_settings.rb.sample#L13) as an example.
+See [smtp_settings.rb.sample](https://gitlab.com/gitlab-org/gitlab-ce/blob/10-1-stable/config/initializers/smtp_settings.rb.sample#L13) as an example.
 
 ### More
 
