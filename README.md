@@ -211,7 +211,7 @@ sudo -u git -H git clone https://gitlab.com/gitlab-org/gitlab-ce.git -b 10-1-sta
 
 ### Configure It
 
-```
+```bash
 # Go to GitLab installation folder
 cd /Users/git/gitlab
 
