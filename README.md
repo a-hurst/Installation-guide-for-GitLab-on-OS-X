@@ -109,42 +109,56 @@ brew install postgresql
 brew services start postgresql
 ```
 
-Login to PostgreSQL
+1. Login to PostgreSQL
 
-```
-psql -d postgres
-```
+    ```
+    psql -d postgres
+    ```
 
-Create a user for GitLab.
+2. Create a user for GitLab.
 
-```
-CREATE USER git CREATEDB;
-ALTER USER git WITH ENCRYPTED PASSWORD 'MY_SECRET_PASSWORD';
-```
+    ```sql
+    CREATE USER git CREATEDB;
+    ALTER USER git WITH ENCRYPTED PASSWORD 'MY_SECRET_PASSWORD';
+    ```
 
-Create the pg_trgm extension (required for GitLab 8.6+):
+3. Create the pg_trgm extension (required for GitLab 8.6+):
 
-```
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
-```
+    ```sql
+    CREATE EXTENSION IF NOT EXISTS pg_trgm;
+    ```
 
-Create the GitLab production database & grant all privileges on database
+4. Create the GitLab production database & grant all privileges on database, then quit the database session
 
-```
-CREATE DATABASE gitlabhq_production OWNER git;
-```
+    ```sql
+    CREATE DATABASE gitlabhq_production OWNER git;
+    \q
+    ```
 
-Quit the database session
+5. Try connecting to the new database with the new user
 
-```
-\q
-```
+    ```
+    sudo -u git -H psql -d gitlabhq_production
+    ```
 
-Try connecting to the new database with the new user
+6. Check if the `pg_trgm` extension is enabled:
 
-```
-sudo -u git -H psql -d gitlabhq_production
-```
+    ```sql
+    SELECT true AS enabled
+    FROM pg_available_extensions
+    WHERE name = 'pg_trgm'
+    AND installed_version IS NOT NULL;
+    ```
+
+    If the extension is enabled this will produce the following output:
+
+    ```
+    enabled
+    ---------
+     t
+    (1 row)
+    ```
+
 
 ## 7. Redis
 
